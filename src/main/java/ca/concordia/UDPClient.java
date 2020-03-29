@@ -19,21 +19,33 @@ import static java.nio.channels.SelectionKey.OP_READ;
 
 public class UDPClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
 
-    private static void runClient(SocketAddress routerAddr, InetSocketAddress serverAddr) throws IOException {
+    private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
+    private byte[] message;
+    private String response;
+
+    private final static int DATA = 0;
+    private final static int SYN = 1;
+    private final static int SYN_ACK = 2;
+    private final static int ACK = 3;
+    private final static int NACK = 4;
+    private final static int FIN = 5;
+
+
+    public void runClient(SocketAddress routerAddr, InetSocketAddress serverAddr) throws IOException {
         try(DatagramChannel channel = DatagramChannel.open()){
-            String msg = "Hello World";
+
             Packet p = new Packet.Builder()
                     .setType(0)
                     .setSequenceNumber(1L)
                     .setPortNumber(serverAddr.getPort())
                     .setPeerAddress(serverAddr.getAddress())
-                    .setPayload(msg.getBytes())
+                    .setPayload(this.message)
                     .create();
+
             channel.send(p.toBuffer(), routerAddr);
 
-            logger.info("Sending \"{}\" to router at {}", msg, routerAddr);
+            logger.info("Sending \"{}\" to router at {}", this.message, routerAddr);
 
             // Try to receive a packet within timeout.
             channel.configureBlocking(false);
@@ -62,38 +74,23 @@ public class UDPClient {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        OptionParser parser = new OptionParser();
-        parser.accepts("router-host", "Router hostname")
-                .withOptionalArg()
-                .defaultsTo("localhost");
 
-        parser.accepts("router-port", "Router port number")
-                .withOptionalArg()
-                .defaultsTo("3000");
+    public byte[] getMessage() {
+        return this.message;
+    }
 
-        parser.accepts("server-host", "EchoServer hostname")
-                .withOptionalArg()
-                .defaultsTo("localhost");
+    public void setMessage(byte[] message) {
+        this.message = message;
+    }
 
-        parser.accepts("server-port", "EchoServer listening port")
-                .withOptionalArg()
-                .defaultsTo("8007");
+    public void setMessage(String message) {
+        logger.info("Messaage set: {}", message);
 
-        OptionSet opts = parser.parse(args);
+        this.message = message.getBytes();
+    }
 
-        // Router address
-        String routerHost = (String) opts.valueOf("router-host");
-        int routerPort = Integer.parseInt((String) opts.valueOf("router-port"));
-
-        // Server address
-        String serverHost = (String) opts.valueOf("server-host");
-        int serverPort = Integer.parseInt((String) opts.valueOf("server-port"));
-
-        SocketAddress routerAddress = new InetSocketAddress(routerHost, routerPort);
-        InetSocketAddress serverAddress = new InetSocketAddress(serverHost, serverPort);
-
-        runClient(routerAddress, serverAddress);
+    public String getResponse() {
+        return this.response;
     }
 }
 
