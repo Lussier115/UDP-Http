@@ -72,8 +72,6 @@ public class UDPClient {
 
             // Check if all packets have been acknowledged, if not resend specific packet.
             logger.info("Client : Check acknowledged packets");
-
-            /*
             while (ackPackets.size() != packets.size()) {
                 for (Map.Entry<Long, Packet> packet : packets.entrySet()) {
 
@@ -91,10 +89,8 @@ public class UDPClient {
                     }
                 }
             }
-             */
 
             logger.info("Client : Sending FIN");
-
             String msgFIN = "Request sent";
             Packet pFIN = new Packet.Builder()
                     .setType(FIN)
@@ -129,7 +125,7 @@ public class UDPClient {
         //Receive Packet
         Packet responsePacket = receive(channel);
 
-        if(responsePacket.getType() == SYN_ACK) {
+        if (responsePacket.getType() == SYN_ACK) {
             // send ACK
             Packet ackPacket = new Packet.Builder()
                     .setType(ACK)
@@ -153,7 +149,8 @@ public class UDPClient {
 
     }
 
-    private Packet receive(DatagramChannel channel) throws IOException { ;
+    private Packet receive(DatagramChannel channel) throws IOException {
+        ;
 
         // Try to receive a packet within timeout.
         channel.configureBlocking(false);

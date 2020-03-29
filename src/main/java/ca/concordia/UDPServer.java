@@ -11,13 +11,25 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 
 public class UDPServer {
 
+    private static final int DATA = 0;
+    private static final int SYN = 1;
+    private static final int SYNACK = 2;
+    private static final int ACK = 3;
+    private static final int NACK = 4;
+    private static final int FIN = 5;
+
     private static final Logger logger = LoggerFactory.getLogger(UDPServer.class);
+    private HashMap<Long, String> requestPackets = new HashMap<Long, String>();
 
     private void listenAndServe(int port) throws IOException {
 
@@ -29,9 +41,21 @@ public class UDPServer {
                     .order(ByteOrder.BIG_ENDIAN);
 
             for (; ; ) {
+
                 buf.clear();
                 SocketAddress router = channel.receive(buf);
 
+                //TODO Read Packets
+                readPackets(buf, router, channel);
+
+                //TODO Send Response
+                /**
+                 * type = DATA, Send ACK packets
+                 * type = FIN, Send response Packets
+                 */
+
+
+                /*
                 // Parse a packet from the received raw data.
                 buf.flip();
                 Packet packet = Packet.fromBuffer(buf);
@@ -50,9 +74,45 @@ public class UDPServer {
                         .setPayload(payload.getBytes())
                         .create();
                 channel.send(resp.toBuffer(), router);
+                 */
 
             }
         }
+    }
+
+    private HashMap<Long, Packet> readPackets(ByteBuffer buffer, SocketAddress router, DatagramChannel channel) throws IOException {
+        Packet packet;
+
+        buffer.flip();
+        packet = Packet.fromBuffer(buffer);
+        buffer.flip();
+        String payload = new String(packet.getPayload(), StandardCharsets.UTF_8);
+
+
+        if(packet.getType() == SYN) {
+            logger.info("Handshake: SYN request");
+
+            //TODO Handle handshake
+            return handleHandShake(packet);
+
+        } else if(packet.getType() == DATA) {
+            //TODO Handle packet data: (1) Add packet data to requestPackets, (2) send ACK Packet
+
+        }else if(packet.getType() == FIN) {
+            //TODO Handle FIN packet: (1) Create Request, (2) Handle Request
+
+        } else if(packet.getType() == ACK) {
+            logger.info("Handshake: ACK received");
+        }
+
+        return null;
+    }
+
+    private HashMap<Long, Packet> handleHandShake(Packet packet) {
+
+        //TODO
+
+        return null;
     }
 
     public static void main(String[] args) throws IOException {
