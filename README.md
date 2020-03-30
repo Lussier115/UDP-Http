@@ -17,6 +17,7 @@ Router (terminal)
 
 Client (Intellji)
 1. Simply run HTTPC like Assignment 1 with program arguments.
+* HTTPFS not implemented yet
 
 
 # TODO
@@ -35,7 +36,7 @@ Once all this is complete, the basic httpc should be functional.
 ## HTTPFS
 ### Update Server
 1. Update server to handle the request if the user uses the httpfs interface.
-* Server might need to a directory update, to add/read a file *
+* Server might need to a directory update, to add/read a file
 
 
 
