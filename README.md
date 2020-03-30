@@ -6,10 +6,22 @@ HTTPClientApplication
 - Anthony Le (40001837)
 
 
-#TODO
+# How I run it (William)
+Server (terminal)
+1. mvn package (I package using an Intellij plugin)
+2. `java -cp .:target/udp-http-1.0-SNAPSHOT-jar-with-dependencies.jar ca.concordia.UDPServer --port 8007`
+
+Router (terminal)
+1. `go build -o router`
+2. `./router`
+
+Client (Intellji)
+1. Simply run HTTPC like Assignment 1 with program arguments.
+
+
+# TODO
 
 ## HTTPC
-
 ### Handle the Response
 1. Send Response packets to Client (Packet are already separated into packets of the right size)
 2. Make sure Client receives all the packets and is able to recreate the Response Object.
@@ -21,9 +33,9 @@ HTTPClientApplication
 Once all this is complete, the basic httpc should be functional.
 
 ## HTTPFS
-
 ### Update Server
 1. Update server to handle the request if the user uses the httpfs interface.
+* Server might need to a directory update, to add/read a file *
 
 
 
