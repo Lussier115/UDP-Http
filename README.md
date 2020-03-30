@@ -5,21 +5,6 @@ HTTPClientApplication
 - William-Andrew Lussier (40033412)
 - Anthony Le (40001837)
 
-
-# How I run it (William)
-Server (terminal)
-1. mvn package (I package using an Intellij plugin)
-2. `java -cp .:target/udp-http-1.0-SNAPSHOT-jar-with-dependencies.jar ca.concordia.UDPServer --port 8007`
-
-Router (terminal)
-1. `go build -o router`
-2. `./router`
-
-Client (Intellji)
-1. Simply run HTTPC like Assignment 1 with program arguments.
-* HTTPFS not implemented yet
-
-
 # TODO
 
 ## HTTPC
@@ -39,8 +24,19 @@ Once all this is complete, the basic httpc should be functional.
 * Server might need to a directory update, to add/read a file
 
 
+# How I run it (William)
+Server (terminal)
+1. mvn package (I package using an Intellij plugin)
+2. `java -cp .:target/udp-http-1.0-SNAPSHOT-jar-with-dependencies.jar ca.concordia.UDPServer --port 8007`
 
-# UDP Example in Java
+Router (terminal)
+1. `go build -o router`
+2. `./router`
+
+Client (Intellji)
+1. Simply run HTTPC like Assignment 1 with program arguments.
+* HTTPFS not implemented yet
+
 
 ## Requirement
 1. [Oracle JDK 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
