@@ -3,6 +3,8 @@ package ca.concordia.network.request;
 import ca.concordia.UDPClient;
 import ca.concordia.network.response.Response;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
@@ -22,34 +24,24 @@ public class RequestHandler {
 
     public Response send(Request request) throws Exception {
 
-        //Temp response
-        response = new Response(request);
-
-
         if (!request.isValid())
             throw new Exception();
-
 
         // Open Socket
         SocketAddress routerAddress = new InetSocketAddress(routerHost, routerPort);
         InetSocketAddress serverAddress = new InetSocketAddress(serverHost, serverPort);
 
+        //Request object to Byte
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(request);
+
+
         //Create UDP CLient();
         udpClient = new UDPClient();
-        udpClient.setMessage(request.toString());
+        udpClient.setMessage(baos.toByteArray());
         udpClient.runClient(routerAddress, serverAddress);
 
-
-        //TODO Read response from udpClient
-        /*
-        try {
-            response = new Response(udpClient.getResponse(), request);
-        } catch (RedirectException e) {
-            request.setUrl(e.getRedirectURL());
-            this.send(request);
-        }
-        */
-
-        return response;
+        return udpClient.getResponse();
     }
 }

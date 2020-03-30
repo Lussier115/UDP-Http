@@ -8,6 +8,7 @@
 /home/wlussier/Projects/Assignment_3/packet/src/main/java/ca/concordia/httpfs/httpfs.java
 /home/wlussier/Projects/Assignment_3/packet/src/main/java/ca/concordia/network/exception/RedirectException.java
 /home/wlussier/Projects/Assignment_3/packet/src/main/java/ca/concordia/UDPClient.java
+/home/wlussier/Projects/Assignment_3/packet/src/main/java/ca/concordia/helper/ByteHelper.java
 /home/wlussier/Projects/Assignment_3/packet/src/main/java/ca/concordia/httpc/httpc.java
 /home/wlussier/Projects/Assignment_3/packet/src/main/java/ca/concordia/UDPServer.java
 /home/wlussier/Projects/Assignment_3/packet/src/main/java/ca/concordia/network/response/Response.java

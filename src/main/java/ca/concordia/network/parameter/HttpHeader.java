@@ -1,8 +1,9 @@
 package ca.concordia.network.parameter;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
-public class HttpHeader {
+public class HttpHeader implements Serializable {
     private HashMap<String, String> headers = new HashMap<>();
     private boolean isValid = true;
 

@@ -4,10 +4,11 @@ package ca.concordia.network.request;
 import ca.concordia.network.exception.InvalidRequestException;
 import ca.concordia.network.parameter.HttpHeader;
 
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class Request {
+public class Request implements Serializable {
 
     protected String version = "HTTP/1.0";
     protected String url;

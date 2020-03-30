@@ -5,11 +5,12 @@ import ca.concordia.network.request.Request;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class Response {
+public class Response implements Serializable {
 
     private ArrayList<String> headers = new ArrayList<>();
     private ArrayList<String> body = new ArrayList<>();
@@ -100,5 +101,26 @@ public class Response {
             e.printStackTrace();
         }
 
+    }
+
+    public String toString() {
+        StringBuilder responseString = new StringBuilder();
+
+        responseString.append("\r\n\r\n");
+
+        if (request.isVerbose()) {
+            for (String content : headers) {
+                responseString.append(content + "\r\n");
+            }
+            responseString.append("\r\n");
+        }
+
+        for (String content : body) {
+            responseString.append(content + "\r\n");
+        }
+
+        responseString.append("\r\n");
+
+        return responseString.toString();
     }
 }
