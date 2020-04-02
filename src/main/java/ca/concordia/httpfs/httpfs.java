@@ -8,8 +8,8 @@ import java.net.*;
 
 public class httpfs {
 
-    private static String MAINPATH = System.getProperty("user.dir") + "/src/com/http/httpfs";
-    private static int PORT = 8080;
+    private static String MAINPATH = System.getProperty("user.dir") + "/src/main/java/ca/concordia/httpfs/httpfs";
+    private static int PORT = 8007;
     private static boolean verbose = false; //TODO
 
     private ServerSocket client;
@@ -45,7 +45,7 @@ public class httpfs {
         server.start();
     }
 
-    private httpfs(int port, String directory) {
+    public httpfs(int port, String directory) {
         try {
             client = new ServerSocket(port, 0, InetAddress.getLoopbackAddress());
 
@@ -59,7 +59,7 @@ public class httpfs {
         }
     }
 
-    private void start() {
+    public void start() {
         System.out.println("Server started at port: " + PORT);
 
         while (true) {
@@ -135,7 +135,7 @@ public class httpfs {
         }
     }
 
-    private void readAllFiles(Writer writer) {
+    public void readAllFiles(Writer writer) {
         try {
             File directory = new File(MAINPATH);
             File[] fileNames = directory.listFiles();
@@ -155,7 +155,7 @@ public class httpfs {
         }
     }
 
-    private void readFile(String file, Writer writer) {
+    public void readFile(String file, Writer writer) {
         String respone = "";
 
         try {
@@ -204,7 +204,7 @@ public class httpfs {
         }
     }
 
-    private void postFile(String fileLocation, Writer writer, BufferedReader reader) {
+    public void postFile(String fileLocation, Writer writer, BufferedReader reader) {
 
         try {
             File file = new File(MAINPATH + fileLocation);

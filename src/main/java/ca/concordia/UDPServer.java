@@ -11,16 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
 import java.util.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
+import ca.concordia.httpfs.httpfs;
 
 public class UDPServer {
 
@@ -65,6 +64,55 @@ public class UDPServer {
                 if (packetMap != null) {
                     if (!sendResponse)
                         for (Map.Entry<Long, Packet> packet : packetMap.entrySet()) {
+
+                            if (packet.getValue().getType() == SYN) {
+                                logger.info("SYN received");
+                            } else if (packet.getValue().getType() == DATA) {
+                                //TODO LINK TO httpfs
+                                String mainPath = System.getProperty("user.dir") + "/src/main/java/ca/concordia/httpfs/httpfs";
+                                httpfs server = new httpfs(8007, mainPath);
+
+                                String payload = new String(packet.getValue().getPayload(), UTF_8);
+                                String[] line = payload.split(" ");
+                                String filePath = "";
+
+                                try {
+                                    filePath = new URL(line[1]).getPath();
+                                } catch (MalformedURLException e) {
+                                    // it wasn't a URL
+                                }
+
+                                if (line[0].toLowerCase().contains("get")) {
+                                    if ((filePath.contentEquals("")) || (filePath.contentEquals("/"))) {
+                                        /* PART 2: QUESTION 1*/
+                                        //TODO How to get Writer?
+                                        server.readAllFiles(writer);
+                                    } else {
+                                        /* PART 2: QUESTION 2*/
+                                        //TODO How to get Writer?
+                                        server.readFile(filePath, writer);
+                                    }
+                                } else if (line[0].toLowerCase().contains("post")) {
+                                    /* PART 2: QUESTION 3 */
+                                    //TODO How to get Writer and Reader?
+                                    server.postFile(filePath, writer, reader);
+                                }
+
+                                /**
+                                 * Lines 82 to 105 is from httpfs.java
+                                 * Do we just replace all the code from line 85 to 105 by:
+                                 * server.start()?
+                                 */
+
+                                logger.info("Packet: {}", packet);
+                                logger.info("Router: {}", router);
+                                logger.info("Payload: {}", payload);
+
+                            } else if (packet.getValue().getType() == ACK) {
+                                String payload = new String(packet.getValue().getPayload(), UTF_8);
+                                logger.info("Payload: {}", payload);
+                            }
+
                             this.sendPacket(packet.getValue());
                         }
                     else {

@@ -13,10 +13,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 
@@ -50,17 +48,30 @@ public class UDPClient {
 
             long sequence = handShake(channel, routerAddr, serverAddr);
 
-            //TODO Payload (message) must be managed so Packet Length it no exceeded.
-            Packet p = new Packet.Builder()
-                    .setType(DATA)
-                    .setSequenceNumber(sequence)
-                    .setPortNumber(serverAddr.getPort())
-                    .setPeerAddress(serverAddr.getAddress())
-                    .setPayload(this.message)
-                    .create();
+            //If packet it small enough
+            if (this.message.length <= Packet.MAX_PAYLOAD) {
+                Packet p = new Packet.Builder()
+                        .setType(DATA)
+                        .setSequenceNumber(sequence)
+                        .setPortNumber(serverAddr.getPort())
+                        .setPeerAddress(serverAddr.getAddress())
+                        .setPayload(this.message)
+                        .create();
 
-            packets.put(p.getSequenceNumber(), p);
+                packets.put(p.getSequenceNumber(), p);
+            } else {
+                //If packet is too large, break it down
+                Packet p = new Packet.Builder()
+                        .setType(NACK)
+                        .setSequenceNumber(sequence)
+                        .setPortNumber(serverAddr.getPort())
+                        .setPeerAddress(serverAddr.getAddress())
+                        .setPayload(this.message)
+                        .create();
 
+                //Break it down and add to HashMap packets
+                this.breakDownPackets(p);
+            }
 
             // Send all Packets in HashMap
             for (Map.Entry<Long, Packet> packet : packets.entrySet()) {
@@ -96,18 +107,6 @@ public class UDPClient {
                 }
             }
 
-            logger.info("Client : Sending FIN");
-            String msgFIN = "Request sent";
-            Packet pFIN = new Packet.Builder()
-                    .setType(FIN)
-                    .setSequenceNumber(sequence)
-                    .setPortNumber(serverAddr.getPort())
-                    .setPeerAddress(serverAddr.getAddress())
-                    .setPayload(msgFIN.getBytes())
-                    .create();
-
-            channel.send(pFIN.toBuffer(), routerAddr);
-
             responsePayload = new HashMap<Long, byte[]>();
 
             //TODO Handle response
@@ -122,6 +121,18 @@ public class UDPClient {
              * Response response = helper.getResponseObject(buffer.array());
              * this.setResponse(response)
              */
+
+            logger.info("Client : Sending FIN");
+            String msgFIN = "Request sent";
+            Packet pFIN = new Packet.Builder()
+                    .setType(FIN)
+                    .setSequenceNumber(sequence)
+                    .setPortNumber(serverAddr.getPort())
+                    .setPeerAddress(serverAddr.getAddress())
+                    .setPayload(msgFIN.getBytes())
+                    .create();
+
+            channel.send(pFIN.toBuffer(), routerAddr);
 
             //Set Response
             logger.info("UDP Client finished");
@@ -189,9 +200,51 @@ public class UDPClient {
         channel.receive(buf);
         buf.flip();
         Packet responsePacket = Packet.fromBuffer(buf);
+        logger.info("Packet: {}", responsePacket);
+        logger.info("Router: {}", channel.receive(buf));
+        String payload = new String(responsePacket.getPayload(), StandardCharsets.UTF_8);
+        logger.info("Payload: {}",  payload);
         keys.clear();
 
         return responsePacket;
+    }
+
+    private void breakDownPackets(Packet packet) {
+        long sequenceNumber = 0;
+
+        if(packet.getPayload().length <= packet.MAX_PAYLOAD) {
+            sequenceNumber = packet.getSequenceNumber();
+            sequenceNumber ++;
+
+            Packet nextPacket = new Packet(packet.getType(),
+                    sequenceNumber,
+                    packet.getPeerAddress(),
+                    packet.getPeerPort(),
+                    Arrays.copyOf(packet.getPayload(), packet.MAX_PAYLOAD));
+
+            packets.put(nextPacket.getSequenceNumber(), nextPacket);
+        }
+        else {
+            sequenceNumber = packet.getSequenceNumber();
+            sequenceNumber ++;
+
+            Packet nextPacket = new Packet(packet.getType(),
+                    sequenceNumber,
+                    packet.getPeerAddress(),
+                    packet.getPeerPort(),
+                    Arrays.copyOf(packet.getPayload(), packet.MAX_PAYLOAD));
+            packets.put(nextPacket.getSequenceNumber(), nextPacket);
+
+            sequenceNumber ++;
+            Packet nextNextPacket = new Packet(packet.getType(),
+                    sequenceNumber,
+                    packet.getPeerAddress(),
+                    packet.getPeerPort(),
+                    Arrays.copyOfRange(packet.getPayload(),packet.MAX_PAYLOAD, packet.getPayload().length));
+
+            //Recursive method
+            breakDownPackets(nextNextPacket);
+        }
     }
 
     public byte[] getMessage() {
@@ -210,4 +263,5 @@ public class UDPClient {
         return this.response;
     }
 }
+
 
