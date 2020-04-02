@@ -34,6 +34,7 @@ public class UDPServer {
     private static final int FIN = 5;
 
     private HashMap<Long, byte[]> requestPackets = new HashMap<Long, byte[]>();
+    private HashMap<Long, Packet> responsePackets = new HashMap<>();
     private boolean sendResponse = false;
 
     private SocketAddress routerAddress;
@@ -68,9 +69,11 @@ public class UDPServer {
                             if (packet.getValue().getType() == SYN) {
                                 logger.info("SYN received");
                             } else if (packet.getValue().getType() == DATA) {
+
                                 //TODO LINK TO httpfs
                                 String mainPath = System.getProperty("user.dir") + "/src/main/java/ca/concordia/httpfs/httpfs";
                                 httpfs server = new httpfs(8007, mainPath);
+//                                server.start();
 
                                 String payload = new String(packet.getValue().getPayload(), UTF_8);
                                 String[] line = payload.split(" ");
@@ -99,9 +102,10 @@ public class UDPServer {
                                 }
 
                                 /**
-                                 * Lines 82 to 105 is from httpfs.java
+                                 * Lines 79 to 105 is from httpfs.java
                                  * Do we just replace all the code from line 85 to 105 by:
-                                 * server.start()?
+                                 * server.start() ?
+                                 * or we can transfer that code in this file?
                                  */
 
                                 logger.info("Packet: {}", packet);
@@ -118,8 +122,23 @@ public class UDPServer {
                     else {
                         //TODO Make sure all response packets have been sent and received
                         // Pretty much the same logic as Client -> Server
-                    }
 
+                        logger.info("Server : Verify packets");
+                        while (responsePackets.size() != packetMap.size()) {
+                            for (Map.Entry<Long, Packet> packet : packetMap.entrySet()) {
+
+                                //Check if packet was requested
+                                if (!responsePackets.containsValue(packet.getValue())) {
+                                    //Send Packet
+                                    sendPacket(packet.getValue());
+
+                                    if (packet.getValue().getType() == FIN) {
+                                        handleFINPacket(packet.getValue());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -218,7 +237,7 @@ public class UDPServer {
     }
 
     private HashMap<Long, Packet> handleResponse(Response response, Packet packet) {
-        HashMap<Long, Packet> responsePackets = new HashMap<>();
+//        HashMap<Long, Packet> responsePackets = new HashMap<>();
 
         logger.info("Response: {}", response.toString());
         byte[] payload = helper.getByteArray(response);
@@ -245,8 +264,8 @@ public class UDPServer {
     }
 
     private HashMap<Long, Packet> breakDownPackets(Packet packet, byte[] payload) {
+//        HashMap<Long, Packet> responsePackets = new HashMap<>();
 
-        HashMap<Long, Packet> responsePackets = new HashMap<>();
         int numberOfPackets = (Math.floorDiv(payload.length, Packet.MAX_PAYLOAD) + 1); // Number of packets needed to send the Payload.
         int offset = 0;
 

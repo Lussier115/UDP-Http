@@ -13,7 +13,7 @@ import java.nio.ByteOrder;
 public class Packet {
 
     public static final int MIN_LEN = 11;
-    public static final int MAX_LEN = 11 + 1024;
+    public static final int MAX_LEN = 11 + 1013;
     public static final int MAX_PAYLOAD = 1013;
 
     private final int type;
