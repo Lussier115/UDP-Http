@@ -31,6 +31,7 @@ public class UDPClient {
     // Handshake
     private final static int SYN = 1; //initial sequence number. The sequence number of the actual first data byte and the acknowledged number in the corresponding ACK are then this sequence number plus 1
     private final static int SYN_ACK = 2;
+    private static boolean handshakeIsSuccessful = false;
 
     // Packet
     private final static int ACK = 3;
@@ -48,29 +49,31 @@ public class UDPClient {
 
             long sequence = handShake(channel, routerAddr, serverAddr);
 
-            //If packet it small enough
-            if (this.message.length <= Packet.MAX_PAYLOAD) {
-                Packet p = new Packet.Builder()
-                        .setType(DATA)
-                        .setSequenceNumber(sequence)
-                        .setPortNumber(serverAddr.getPort())
-                        .setPeerAddress(serverAddr.getAddress())
-                        .setPayload(this.message)
-                        .create();
+            if(handshakeIsSuccessful) {
+                //If packet it small enough
+                if (this.message.length <= Packet.MAX_PAYLOAD) {
+                    Packet p = new Packet.Builder()
+                            .setType(DATA)
+                            .setSequenceNumber(sequence+1)
+                            .setPortNumber(serverAddr.getPort())
+                            .setPeerAddress(serverAddr.getAddress())
+                            .setPayload(this.message)
+                            .create();
 
-                packets.put(p.getSequenceNumber(), p);
-            } else {
-                //If packet is too large, break it down
-                Packet p = new Packet.Builder()
-                        .setType(NACK)
-                        .setSequenceNumber(sequence)
-                        .setPortNumber(serverAddr.getPort())
-                        .setPeerAddress(serverAddr.getAddress())
-                        .setPayload(this.message)
-                        .create();
+                    packets.put(p.getSequenceNumber(), p);
+                } else {
+                    //If packet is too large, break it down
+                    Packet p = new Packet.Builder()
+                            .setType(NACK)
+                            .setSequenceNumber(sequence)
+                            .setPortNumber(serverAddr.getPort())
+                            .setPeerAddress(serverAddr.getAddress())
+                            .setPayload(this.message)
+                            .create();
 
-                //Break it down and add to HashMap packets
-                this.breakDownPackets(p);
+                    //Break it down and add to HashMap packets
+                    this.breakDownPackets(p);
+                }
             }
 
             // Send all Packets in HashMap
@@ -172,6 +175,7 @@ public class UDPClient {
 
             logger.info("Handshake: Connection ACK, handshake complete");
 
+            handshakeIsSuccessful = true;
             return ackPacket.getSequenceNumber();
         } else {
 
