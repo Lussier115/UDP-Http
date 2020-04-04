@@ -58,10 +58,8 @@ public class UDPServer {
                 SocketAddress router = channel.receive(buf);
                 this.setRouterAddress(router);
 
-
                 HashMap<Long, Packet> packetMap = readPackets(buf);
 
-                //TODO Send Response
                 if (packetMap != null) {
                     if (!sendResponse)
                         for (Map.Entry<Long, Packet> packet : packetMap.entrySet()) {
@@ -102,9 +100,9 @@ public class UDPServer {
                                 }
 
                                 /**
-                                 * Lines 79 to 105 is from httpfs.java
+                                 * Lines 79 to 105 are from httpfs.java
                                  * Do we just replace all the code from line 85 to 105 by:
-                                 * server.start() ?
+                                 * server.start() ? on line 74
                                  * or we can transfer that code in this file?
                                  */
 
@@ -118,27 +116,23 @@ public class UDPServer {
                             }
 
                             this.sendPacket(packet.getValue());
-                        }
-                    else {
-                        //TODO Make sure all response packets have been sent and received
-                        // Pretty much the same logic as Client -> Server
+                        } else {
+                            logger.info("Server : Verify packets");
+                            while (responsePackets.size() != packetMap.size()) {
+                                for (Map.Entry<Long, Packet> packet : packetMap.entrySet()) {
 
-                        logger.info("Server : Verify packets");
-                        while (responsePackets.size() != packetMap.size()) {
-                            for (Map.Entry<Long, Packet> packet : packetMap.entrySet()) {
+                                    //Check if packet was requested
+                                    if (!responsePackets.containsValue(packet.getValue())) {
+                                        //Send Packet
+                                        sendPacket(packet.getValue());
 
-                                //Check if packet was requested
-                                if (!responsePackets.containsValue(packet.getValue())) {
-                                    //Send Packet
-                                    sendPacket(packet.getValue());
-
-                                    if (packet.getValue().getType() == FIN) {
-                                        handleFINPacket(packet.getValue());
+                                        if (packet.getValue().getType() == FIN) {
+                                            handleFINPacket(packet.getValue());
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
                 }
             }
         }

@@ -50,28 +50,19 @@ public class UDPClient {
             long sequence = handShake(channel, routerAddr, serverAddr);
 
             if(handshakeIsSuccessful) {
-                //If packet it small enough
-                if (this.message.length <= Packet.MAX_PAYLOAD) {
-                    Packet p = new Packet.Builder()
-                            .setType(DATA)
-                            .setSequenceNumber(sequence+1)
-                            .setPortNumber(serverAddr.getPort())
-                            .setPeerAddress(serverAddr.getAddress())
-                            .setPayload(this.message)
-                            .create();
+                Packet p = new Packet.Builder()
+                        .setType(DATA)
+                        .setSequenceNumber(sequence)
+                        .setPortNumber(serverAddr.getPort())
+                        .setPeerAddress(serverAddr.getAddress())
+                        .setPayload(this.message)
+                        .create();
 
+                //If packet is small enough
+                if (this.getMessage().length <= Packet.MAX_PAYLOAD) {
                     packets.put(p.getSequenceNumber(), p);
                 } else {
-                    //If packet is too large, break it down
-                    Packet p = new Packet.Builder()
-                            .setType(NACK)
-                            .setSequenceNumber(sequence)
-                            .setPortNumber(serverAddr.getPort())
-                            .setPeerAddress(serverAddr.getAddress())
-                            .setPayload(this.message)
-                            .create();
-
-                    //Break it down and add to HashMap packets
+                    //If packet is too large, break it down and add to HashMap packets
                     this.breakDownPackets(p);
                 }
             }
@@ -111,19 +102,13 @@ public class UDPClient {
             }
 
             responsePayload = new HashMap<Long, byte[]>();
+            for(Packet packet: ackPackets){
+                responsePayload.put(packet.getSequenceNumber(), packet.getPayload());
+            }
 
-            //TODO Handle response
-            /**
-             * 1) Client receives response Packets, Type == DATA
-             * 2) When Client has Ack all response packets to the Server, Server sends packet Type == FIN
-             *
-             * Store packets in responsePayload.put(packet.getSequenceNumber, packet.getPayload())
-             * Then use the following to get the response Object:
-             *
-             * ByteBuffer buffer = helper.getMergeBytes(responsePayload);
-             * Response response = helper.getResponseObject(buffer.array());
-             * this.setResponse(response)
-             */
+            ByteBuffer buffer = helper.getMergeBytes(responsePayload);
+            Response response = helper.getResponseObject(buffer.array());
+            this.setResponse(response);
 
             logger.info("Client : Sending FIN");
             String msgFIN = "Request sent";
@@ -137,7 +122,6 @@ public class UDPClient {
 
             channel.send(pFIN.toBuffer(), routerAddr);
 
-            //Set Response
             logger.info("UDP Client finished");
         }
     }
