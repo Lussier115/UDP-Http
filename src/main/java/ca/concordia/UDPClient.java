@@ -101,15 +101,7 @@ public class UDPClient {
                 }
             }
 
-            responsePayload = new HashMap<Long, byte[]>();
-            for(Packet packet: ackPackets){
-                responsePayload.put(packet.getSequenceNumber(), packet.getPayload());
-            }
-
-            ByteBuffer buffer = helper.getMergeBytes(responsePayload);
-            Response response = helper.getResponseObject(buffer.array());
-            this.setResponse(response);
-
+            //FIN packet
             logger.info("Client : Sending FIN");
             String msgFIN = "Request sent";
             Packet pFIN = new Packet.Builder()
@@ -121,6 +113,18 @@ public class UDPClient {
                     .create();
 
             channel.send(pFIN.toBuffer(), routerAddr);
+            Packet receivedFINPacket = receive(channel);
+            ackPackets.add(receivedFINPacket);
+
+            //Response packets
+            responsePayload = new HashMap<Long, byte[]>();
+            for(Packet packet: ackPackets){
+                responsePayload.put(packet.getSequenceNumber(), packet.getPayload());
+            }
+
+            ByteBuffer buffer = helper.getMergeBytes(responsePayload);
+            Response response = helper.getResponseObject(buffer.array());
+            this.setResponse(response);
 
             logger.info("UDP Client finished");
         }
