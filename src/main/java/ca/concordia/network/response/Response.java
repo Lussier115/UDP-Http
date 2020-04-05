@@ -98,7 +98,7 @@ public class Response implements Serializable {
                 writer.println(content);
             }
             writer.close();
-            logger.info("Response printed to: {}" + request.getOutputLocation());
+            logger.info("Response printed to: {}", request.getOutputLocation());
         } catch (FileNotFoundException e) {
             logger.error(e.getMessage());
         } catch (UnsupportedEncodingException e) {
