@@ -76,7 +76,7 @@ GET -v  http://httpbin.org/get
 `
 
 `
-GET -v  http://httpbin.org/absolute-redirect/3 -o /home/wlussier/Projects/HTTPClientApplication/sampleFiles/output.txt 
+GET -v  http://httpbin.org/absolute-redirect/3 -o /home/wlussier/Projects/UDP-Http/sampleFiles/output.txt 
 `
 
 `
@@ -92,7 +92,7 @@ GET -h "User-Agent: Hello" http://httpbin.org/status/418
 `
 
 `
-GET -h "User-Agent: Hello" http://httpbin.org/status/418 -o /home/wlussier/Projects/HTTPClientApplication/sampleFiles/teapot.txt 
+GET -h "User-Agent: Hello" http://httpbin.org/status/418 -o /home/wlussier/Projects/UDP-Http/sampleFiles/teapot.txt 
 `
 
 #### POST
@@ -105,5 +105,5 @@ POST -h Content-Type:application/json -d '{"Assignment": {"Page": 2, "Paragraph"
 `
 
 `
-POST -f /home/wlussier/Projects/HTTPClientApplication/sampleFiles/example.txt http://httpbin.org/post
+POST -f /home/wlussier/Projects/UDP-Http/sampleFiles/example.txt http://httpbin.org/post
 `

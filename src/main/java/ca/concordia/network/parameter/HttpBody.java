@@ -1,6 +1,8 @@
 package ca.concordia.network.parameter;
 
-public class HttpBody {
+import java.io.Serializable;
+
+public class HttpBody implements Serializable {
 
     String body;
     BodyType type;

@@ -1,12 +1,12 @@
 package ca.concordia.network.response;
 
+import ca.concordia.UDPClient;
 import ca.concordia.network.exception.RedirectException;
 import ca.concordia.network.request.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -14,16 +14,10 @@ public class Response implements Serializable {
 
     private ArrayList<String> headers = new ArrayList<>();
     private ArrayList<String> body = new ArrayList<>();
+    private final Logger logger = LoggerFactory.getLogger(UDPClient.class);
 
     private boolean redirect = false;
-
     Request request;
-
-    public Response(Request request) {
-        body.add("==== Default response constructor used ====");
-        body.add(request.toString());
-        this.request = request;
-    }
 
     public Response(Scanner in, Request request) throws RedirectException {
 
@@ -81,7 +75,17 @@ public class Response implements Serializable {
     }
 
     private void writeToFile() {
+
         try {
+            File file = new File(request.getOutputLocation());
+
+            if (!file.exists()) {
+                String directory = file.getParent();
+                File directoryX = new File(directory);
+                directoryX.mkdirs();
+                file = new File(request.getOutputLocation());
+            }
+
             PrintWriter writer = new PrintWriter(request.getOutputLocation(), "UTF-8");
             if (request.isVerbose()) {
                 for (String content : headers) {
@@ -94,13 +98,12 @@ public class Response implements Serializable {
                 writer.println(content);
             }
             writer.close();
-            System.out.println("Response printed to: " + request.getOutputLocation());
+            logger.info("Response printed to: {}" + request.getOutputLocation());
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
-
     }
 
     public String toString() {

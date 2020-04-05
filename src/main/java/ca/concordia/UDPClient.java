@@ -69,7 +69,6 @@ public class UDPClient {
                 // Send all Packets in HashMap
                 for (Map.Entry<Long, Packet> packet : requestPackets.entrySet()) {
                     //Send Packet
-                    logger.info("Sending Packet: {}", packet.getValue().getSequenceNumber());
                     channel.send(packet.getValue().toBuffer(), routerAddr);
 
                     //Receive Packet
@@ -81,7 +80,6 @@ public class UDPClient {
                 }
 
                 // Check if all packets have been acknowledged, if not resend specific packet.
-                logger.info("Client : Check acknowledged packets");
                 while (ackPackets.size() != requestPackets.size()) {
                     for (Map.Entry<Long, Packet> packet : requestPackets.entrySet()) {
 
@@ -100,7 +98,6 @@ public class UDPClient {
                     }
                 }
 
-                logger.info("Client : Sending FIN");
                 String msgFIN = "Request sent";
                 Packet pFIN = new Packet.Builder()
                         .setType(FIN)
@@ -112,23 +109,43 @@ public class UDPClient {
 
                 channel.send(pFIN.toBuffer(), routerAddr);
 
-                responsePayload = new HashMap<Long, byte[]>();
 
-                //TODO Handle response
-                /**
-                 * 1) Client receives response Packets, Type == DATA
-                 * 2) When Client has Ack all response packets to the Server, Server sends packet Type == FIN
-                 *
-                 * Store packets in responsePayload.put(packet.getSequenceNumber, packet.getPayload())
-                 * Then use the following to get the response Object:
-                 *
-                 * ByteBuffer buffer = helper.getMergeBytes(responsePayload);
-                 * Response response = helper.getResponseObject(buffer.array());
-                 * this.setResponse(response)
-                 */
+                //Get Response Packets
+                receiveResponse(channel, serverAddr, routerAddr);
+
 
                 //Set Response
                 logger.info("UDP Client finished");
+            }
+        }
+    }
+
+    private void receiveResponse(DatagramChannel channel, InetSocketAddress serverAddr, SocketAddress routerAddr) throws IOException {
+        responsePayload = new HashMap<Long, byte[]>();
+
+        while (true) {
+
+            Packet packet = receive(channel);
+
+            if (packet.getType() == DATA) {
+
+                responsePayload.put(packet.getSequenceNumber(), packet.getPayload());
+
+                Packet ackp = new Packet.Builder()
+                        .setType(ACK)
+                        .setPortNumber(serverAddr.getPort())
+                        .setPeerAddress(serverAddr.getAddress())
+                        .setPayload("Response ACK".getBytes())
+                        .create();
+
+                channel.send(ackp.toBuffer(), routerAddr);
+
+            } else if (packet.getType() == FIN) {
+                ByteBuffer buffer = helper.getMergeBytes(responsePayload);
+                Response response = helper.getResponseObject(buffer.array());
+                this.setResponse(response);
+
+                return;
             }
         }
     }

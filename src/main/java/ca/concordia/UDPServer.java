@@ -34,6 +34,7 @@ public class UDPServer {
     private static final int FIN = 5;
 
     private HashMap<Long, byte[]> requestPackets = new HashMap<Long, byte[]>();
+    private ArrayList<Packet> ackResponsePackets; //Ack Packets
     private boolean sendResponse = false;
 
     private SocketAddress routerAddress;
@@ -52,7 +53,7 @@ public class UDPServer {
                     .order(ByteOrder.BIG_ENDIAN);
 
             for (; ; ) {
-
+                sendResponse = false;
                 buf.clear();
                 SocketAddress router = channel.receive(buf);
                 this.setRouterAddress(router);
@@ -62,20 +63,79 @@ public class UDPServer {
 
                 //TODO Send Response
                 if (packetMap != null) {
-                    if (!sendResponse){
+                    if (!sendResponse) {
                         for (Map.Entry<Long, Packet> packet : packetMap.entrySet()) {
                             this.sendPacket(packet.getValue());
                         }
-                    }
-                    else {
+                    } else {
                         logger.info("Sending Response");
-                        //TODO Make sure all response packets have been sent and received
-                        // Pretty much the same logic as Client -> Server
+                        this.sendResponsePackets(packetMap);
+                        logger.info("Response Sent");
                     }
 
                 }
             }
         }
+    }
+
+    private void sendResponsePackets(HashMap<Long, Packet> responsePackets) throws IOException {
+        ackResponsePackets = new ArrayList<>();
+
+        // Send all Packets in HashMap
+        for (Map.Entry<Long, Packet> packet : responsePackets.entrySet()) {
+            //Send Packet
+            logger.info("Sending Packet: {}", packet.getValue().getSequenceNumber());
+            channel.send(packet.getValue().toBuffer(), routerAddress);
+
+            //Receive Packet
+            Packet responsePacket = receive(channel);
+
+            if (responsePacket.getType() == ACK) {
+                logger.info("ACK Response Packet");
+                ackResponsePackets.add(responsePacket);
+            }
+        }
+
+        logger.info("Check acknowledged packets");
+        while (ackResponsePackets.size() != responsePackets.size()) {
+            for (Map.Entry<Long, Packet> packet : responsePackets.entrySet()) {
+
+                //Check if packet has been ack
+                if (!ackResponsePackets.contains(packet.getValue())) {
+                    //Send Packet
+                    channel.send(packet.getValue().toBuffer(), routerAddress);
+
+                    //Receive Packet
+                    Packet receivedPacket = receive(channel);
+
+                    if (receivedPacket.getType() == ACK) {
+                        ackResponsePackets.add(receivedPacket);
+                    }
+                }
+            }
+        }
+
+        String msgFIN = "Response sent";
+        Packet pFIN = ackResponsePackets.get(0).toBuilder()
+                .setType(FIN)
+                .setPayload(msgFIN.getBytes())
+                .create();
+
+        channel.send(pFIN.toBuffer(), routerAddress);
+
+
+        return;
+    }
+
+    private Packet receive(DatagramChannel channel) throws IOException {
+
+        // We just want a single response.
+        ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
+        channel.receive(buf);
+        buf.flip();
+        Packet responsePacket = Packet.fromBuffer(buf);
+
+        return responsePacket;
     }
 
     private void setDatagramChanel(DatagramChannel channel) {
@@ -185,8 +245,7 @@ public class UDPServer {
 
             responsePackets.put(responsePacket.getSequenceNumber(), responsePacket);
         } else {
-            logger.info("Payload size: {} > Packet max payload: 1013 ", payload.length);
-
+            logger.info("Payload size: {} > Packet max payload: {} ", payload.length, Packet.MAX_PAYLOAD);
             return breakDownPackets(packet, payload);
         }
 
@@ -205,15 +264,13 @@ public class UDPServer {
             byte[] newPayload = Arrays.copyOfRange(payload, offset, (offset + Packet.MAX_PAYLOAD));
 
             seqNum++;
-            Packet responsePacket = null;
-            logger.info("Response Packet: #{}", x);
-
-
-            responsePacket = packet.toBuilder()
+            Packet responsePacket = packet.toBuilder()
                     .setPayload(newPayload)
                     .setSequenceNumber(seqNum)
                     .setType(DATA)
                     .create();
+
+            logger.info("Response Packet: #{}", responsePacket.getSequenceNumber());
 
             responsePackets.put(responsePacket.getSequenceNumber(), responsePacket);
             offset += Packet.MAX_PAYLOAD;
@@ -250,8 +307,9 @@ public class UDPServer {
             response = new Response(in, request);
         } catch (RedirectException e) {
             // Redirection Handling
+            logger.info("Redirection : {}", e.getRedirectURL());
             request.setUrl(e.getRedirectURL());
-            this.handleRequest(request);
+            return this.handleRequest(request);
         }
 
         out.close();
