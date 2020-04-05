@@ -1,7 +1,10 @@
 package ca.concordia.network.request;
 
+import ca.concordia.UDPClient;
 import ca.concordia.network.parameter.HttpBody;
 import ca.concordia.network.exception.InvalidRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,6 +12,8 @@ import java.util.Scanner;
 
 
 public class PostRequest extends Request {
+
+    private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
 
     private HttpBody body;
     private boolean hasF = false;
@@ -73,7 +78,7 @@ public class PostRequest extends Request {
 
             myReader.close();
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return data;

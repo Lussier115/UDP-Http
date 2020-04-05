@@ -5,62 +5,42 @@ HTTPClientApplication
 - William-Andrew Lussier (40033412)
 - Anthony Le (40001837)
 
-# TODO
-
-## HTTPC
-### Handle the Response
-1. Send Response packets to Client (Packet are already separated into packets of the right size)
-2. Make sure Client receives all the packets and is able to recreate the Response Object.
-
-### Update the Request Payload
-1. Update the code so that if the request object sent as a payload to the Server does not exceed the Max size.
-2. Break down the packet like in the Server if the payload is too large.
-
-Once all this is complete, the basic httpc should be functional.
-
-## HTTPFS
-### Update Server
-1. Update server to handle the request if the user uses the httpfs interface.
-* Server might need to a directory update, to add/read a file
-
-
 # How I run it (William)
-Server (terminal)
+1. **Maven Package**
+---
+Httpfs
 1. mvn package (I package using an Intellij plugin)
-2. `java -cp .:target/udp-http-1.0-SNAPSHOT-jar-with-dependencies.jar ca.concordia.UDPServer --port 8007`
+2. cd target
+3. `java -jar Httpfs.jar -v -d /home/william/Projects/UDP-Http/sampleFiles`
+
+    * Path directory: `-d $home/UDP-Http/sampleFiles`
+    * Verbose: `-v`
+
+---
+Server
+1. cd target
+2. `java -jar UDPServer.jar --port 8007`
+
+    * Port: `--port #`
+---
 
 Router (terminal)
 1. `go build -o router`
 2. `./router`
 
+
 Client (Intellji)
-1. Simply run HTTPC like Assignment 1 with program arguments.
-* HTTPFS not implemented yet
+1. cd target
+2. `java -jar Httpc.jar {GET/POST Arguments}`
 
-
-## Requirement
-1. [Oracle JDK 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
-2. [Apache Maven](https://maven.apache.org/) 
-
-## Usage
-
-1. Compile and package jar 
-   mvn package
-
-2. Run the router (see router's README)
-
-3. Run the echo server
-   java -cp .:target/udp-http-1.0-SNAPSHOT-jar-with-dependencies.jar ca.concordia.UDPServer --port 8007
-
-4. Run the echo client
-   java -cp .:target/udp-http-1.0-SNAPSHOT-jar-with-dependencies.jar ca.concordia.UDPClient \
-   --router-host localhost \
-   --router-port 3000 \
-   --server-host localhost \
-   --server-port 8007 \
-
+  Example: `java -jar Httpc.jar GET -v  http://httpbin.org/absolute-redirect/3`
 
 ## Tested Commands
+
+  * Update paths with respect to your project location path-to-project/UDP-Http
+
+HTTPC
+---
 
 #### HELP
 
@@ -71,39 +51,34 @@ Client (Intellji)
 `help get`
 
 #### GET
-`
-GET -v  http://httpbin.org/get
-`
+`GET -v  http://httpbin.org/get`
 
-`
-GET -v  http://httpbin.org/absolute-redirect/3 -o /home/wlussier/Projects/UDP-Http/sampleFiles/output.txt 
-`
+`GET -v  http://httpbin.org/absolute-redirect/3 -o /home/william/Projects/UDP-Http/sampleFiles/output.txt `
 
-`
-GET -v  http://httpbin.org/absolute-redirect/3
-`
+`GET -v  http://httpbin.org/absolute-redirect/3`
 
-`
-GET http://httpbin.org/get?course=networking&assignment=1 
-`
+`GET http://httpbin.org/get?course=networking&assignment=1 `
 
-`
-GET -h "User-Agent: Hello" http://httpbin.org/status/418
-`
+`GET -h "User-Agent: Hello" http://httpbin.org/status/418`
 
-`
-GET -h "User-Agent: Hello" http://httpbin.org/status/418 -o /home/wlussier/Projects/UDP-Http/sampleFiles/teapot.txt 
-`
+`GET -h "User-Agent: Hello" http://httpbin.org/status/418 -o /home/william/Projects/UDP-Http/sampleFiles/teapot.txt `
 
 #### POST
-`
-POST -h Content-Type:application/json -d '{"Assignment": 1}' http://httpbin.org/post
-`
+`POST -h Content-Type:application/json -d '{"Assignment": 1}' http://httpbin.org/post`
 
-`
-POST -h Content-Type:application/json -d '{"Assignment": {"Page": 2, "Paragraph": 2}}' http://httpbin.org/post
-`
+`POST -h Content-Type:application/json -d '{"Assignment": {"Page": 2, "Paragraph": 2}}' http://httpbin.org/post`
 
-`
-POST -f /home/wlussier/Projects/UDP-Http/sampleFiles/example.txt http://httpbin.org/post
-`
+`POST -f /home/william/Projects/UDP-Http/sampleFiles/example.txt http://httpbin.org/post`
+
+HTTFS
+---
+
+`Get http://localhost:8080/`
+
+`Get -v http://localhost:8080/`
+
+`Get -v http://localhost:8080/teapot.txt`
+
+`Post -v -d '{"Assignment": 1}' http://localhost:8080/output.txt`
+
+`Post -v -f /home/william/Projects/UDP-Http/sampleFiles/teapot.txt http://localhost:8080/output.txt`
