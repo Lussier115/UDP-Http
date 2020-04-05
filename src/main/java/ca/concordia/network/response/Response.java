@@ -14,7 +14,7 @@ public class Response implements Serializable {
 
     private ArrayList<String> headers = new ArrayList<>();
     private ArrayList<String> body = new ArrayList<>();
-    private final Logger logger = LoggerFactory.getLogger(UDPClient.class);
+    private final Logger logger = LoggerFactory.getLogger(Response.class);
 
     private boolean redirect = false;
     Request request;
@@ -53,6 +53,7 @@ public class Response implements Serializable {
     }
 
     public void display() {
+        logger.info("Response :");
 
         if (!request.isFileOutput()) {
             System.out.print("\r\n");

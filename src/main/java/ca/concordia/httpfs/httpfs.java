@@ -11,7 +11,7 @@ import java.net.*;
 
 public class httpfs {
     
-    private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(httpfs.class);
 
     private static String MAINPATH = System.getProperty("user.dir") + "/src/ca/concordia/httpfs/httpfs";
     private static int PORT = 8080;

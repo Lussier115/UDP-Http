@@ -26,8 +26,8 @@ const (
 	maxLen = 1024
 )
 
-// Packet represents a simulated network packet.
-type Packet struct {
+// udp.Packet represents a simulated network packet.
+type udp.Packet struct {
 	// Type is the type of the packet which is either ACK or DATA (1 byte).
 	Type uint8
 	// SeqNum is the sequence number of the packet. It's 4 bytes in BigEndian format.
@@ -43,7 +43,7 @@ type Packet struct {
 }
 
 // Raw returns the raw representation of the packet is to be sent in BigEndian.
-func (p Packet) Raw() []byte {
+func (p udp.Packet) Raw() []byte {
 	var buf bytes.Buffer
 	append := func(data interface{}) {
 		binary.Write(&buf, binary.BigEndian, data)
@@ -59,12 +59,12 @@ func (p Packet) Raw() []byte {
 	return buf.Bytes()
 }
 
-func (p Packet) String() string {
+func (p udp.Packet) String() string {
 	return fmt.Sprintf("#%d, %s -> %s, sz=%d", p.SeqNum, p.FromAddr, p.ToAddr, len(p.Payload))
 }
 
 // parsePacket extracts, validates and creates a packet from a slice of bytes.
-func parsePacket(fromAddr *net.UDPAddr, data []byte) (*Packet, error) {
+func parsePacket(fromAddr *net.UDPAddr, data []byte) (*udp.Packet, error) {
 	if len(data) < minLen {
 		return nil, fmt.Errorf("packet is too short: %d bytes", len(data))
 	}
@@ -78,7 +78,7 @@ func parsePacket(fromAddr *net.UDPAddr, data []byte) (*Packet, error) {
 		return bs
 	}
 	u16, u32 := binary.BigEndian.Uint16, binary.BigEndian.Uint32
-	p := Packet{}
+	p := udp.Packet{}
 	p.Type = next(1)[0]
 	p.SeqNum = u32(next(4))
 	p.FromAddr = fromAddr
@@ -93,7 +93,7 @@ func parsePacket(fromAddr *net.UDPAddr, data []byte) (*Packet, error) {
 }
 
 // send sends the packet the associated destination of the packet.
-func send(conn *net.UDPConn, p Packet) {
+func send(conn *net.UDPConn, p udp.Packet) {
 	decrQueue()
 	if _, err := conn.WriteToUDP(p.Raw(), p.ToAddr); err != nil {
 		logger.Printf("failed to deliver %s: %v\n", p, err)
@@ -103,7 +103,7 @@ func send(conn *net.UDPConn, p Packet) {
 }
 
 // process processes the received packet. It can be discarded or deliver with a delayed duration.
-func process(conn *net.UDPConn, p Packet) {
+func process(conn *net.UDPConn, p udp.Packet) {
 	if rand.Float64() < *dropRate {
 		logger.Printf("[queue=%d] packet %s is dropped\n", currQueue(), p)
 		return

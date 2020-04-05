@@ -3,11 +3,11 @@ ca/concordia/UDPClient.class
 ca/concordia/UDPServer.class
 ca/concordia/network/request/RequestHandler.class
 ca/concordia/network/request/Request.class
-ca/concordia/helper/ByteHelper.class
 ca/concordia/network/response/Response.class
+ca/concordia/helper/ByteHelper.class
 ca/concordia/network/exception/InvalidRequestException.class
-ca/concordia/network/file/HttpReader.class
 ca/concordia/network/parameter/HttpBody.class
+ca/concordia/network/file/HttpReader.class
 ca/concordia/Packet.class
 ca/concordia/network/request/GetRequest.class
 ca/concordia/httpfs/httpfs.class

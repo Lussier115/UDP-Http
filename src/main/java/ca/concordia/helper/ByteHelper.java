@@ -13,7 +13,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class ByteHelper {
-    private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(ByteHelper.class);
 
     public Request getRequestObject(byte[] array){
         try{

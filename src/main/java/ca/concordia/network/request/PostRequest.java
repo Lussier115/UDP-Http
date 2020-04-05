@@ -13,7 +13,7 @@ import java.util.Scanner;
 
 public class PostRequest extends Request {
 
-    private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(PostRequest.class);
 
     private HttpBody body;
     private boolean hasF = false;
