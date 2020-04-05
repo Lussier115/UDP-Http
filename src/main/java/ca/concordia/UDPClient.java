@@ -13,10 +13,7 @@ import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 
@@ -39,92 +36,100 @@ public class UDPClient {
     private final static int NACK = 4;
     private final static int FIN = 5; //Done sending all packets
 
-    private HashMap<Long, Packet> packets;
+    private HashMap<Long, Packet> requestPackets;
     private ArrayList<Packet> ackPackets; //Ack Packets
     private HashMap<Long, byte[]> responsePayload;
 
     public void runClient(SocketAddress routerAddr, InetSocketAddress serverAddr) throws IOException {
         try (DatagramChannel channel = DatagramChannel.open()) {
-            packets = new HashMap<Long, Packet>();
+            requestPackets = new HashMap<Long, Packet>();
             ackPackets = new ArrayList<Packet>();
 
             long sequence = handShake(channel, routerAddr, serverAddr);
 
-            //TODO Payload (message) must be managed so Packet Length it no exceeded.
-            Packet p = new Packet.Builder()
-                    .setType(DATA)
-                    .setSequenceNumber(sequence)
-                    .setPortNumber(serverAddr.getPort())
-                    .setPeerAddress(serverAddr.getAddress())
-                    .setPayload(this.message)
-                    .create();
+            if (sequence != -1) {
 
-            packets.put(p.getSequenceNumber(), p);
+                //Build default packet
+                Packet p = new Packet.Builder()
+                        .setType(DATA)
+                        .setSequenceNumber(sequence)
+                        .setPortNumber(serverAddr.getPort())
+                        .setPeerAddress(serverAddr.getAddress())
+                        .setPayload(this.message)
+                        .create();
 
-
-            // Send all Packets in HashMap
-            for (Map.Entry<Long, Packet> packet : packets.entrySet()) {
-                //Send Packet
-                logger.info("Sending Packet: {}", packet.getValue().getSequenceNumber());
-                channel.send(packet.getValue().toBuffer(), routerAddr);
-
-                //Receive Packet
-                Packet responsePacket = receive(channel);
-
-                if (responsePacket.getType() == ACK) {
-                    ackPackets.add(responsePacket);
+                //Check if packet payload too large to send
+                if (this.message.length > Packet.MAX_PAYLOAD) {
+                    requestPackets = breakDownPackets(p);
+                } else {
+                    requestPackets.put(p.getSequenceNumber(), p);
                 }
-            }
 
-            // Check if all packets have been acknowledged, if not resend specific packet.
-            logger.info("Client : Check acknowledged packets");
-            while (ackPackets.size() != packets.size()) {
-                for (Map.Entry<Long, Packet> packet : packets.entrySet()) {
 
-                    //Check if packet has been ack
-                    if (!ackPackets.contains(packet.getValue())) {
-                        //Send Packet
-                        channel.send(packet.getValue().toBuffer(), routerAddr);
+                // Send all Packets in HashMap
+                for (Map.Entry<Long, Packet> packet : requestPackets.entrySet()) {
+                    //Send Packet
+                    logger.info("Sending Packet: {}", packet.getValue().getSequenceNumber());
+                    channel.send(packet.getValue().toBuffer(), routerAddr);
 
-                        //Receive Packet
-                        Packet receivedPacket = receive(channel);
+                    //Receive Packet
+                    Packet responsePacket = receive(channel);
 
-                        if (receivedPacket.getType() == ACK) {
-                            ackPackets.add(receivedPacket);
+                    if (responsePacket.getType() == ACK) {
+                        ackPackets.add(responsePacket);
+                    }
+                }
+
+                // Check if all packets have been acknowledged, if not resend specific packet.
+                logger.info("Client : Check acknowledged packets");
+                while (ackPackets.size() != requestPackets.size()) {
+                    for (Map.Entry<Long, Packet> packet : requestPackets.entrySet()) {
+
+                        //Check if packet has been ack
+                        if (!ackPackets.contains(packet.getValue())) {
+                            //Send Packet
+                            channel.send(packet.getValue().toBuffer(), routerAddr);
+
+                            //Receive Packet
+                            Packet receivedPacket = receive(channel);
+
+                            if (receivedPacket.getType() == ACK) {
+                                ackPackets.add(receivedPacket);
+                            }
                         }
                     }
                 }
+
+                logger.info("Client : Sending FIN");
+                String msgFIN = "Request sent";
+                Packet pFIN = new Packet.Builder()
+                        .setType(FIN)
+                        .setSequenceNumber(sequence)
+                        .setPortNumber(serverAddr.getPort())
+                        .setPeerAddress(serverAddr.getAddress())
+                        .setPayload(msgFIN.getBytes())
+                        .create();
+
+                channel.send(pFIN.toBuffer(), routerAddr);
+
+                responsePayload = new HashMap<Long, byte[]>();
+
+                //TODO Handle response
+                /**
+                 * 1) Client receives response Packets, Type == DATA
+                 * 2) When Client has Ack all response packets to the Server, Server sends packet Type == FIN
+                 *
+                 * Store packets in responsePayload.put(packet.getSequenceNumber, packet.getPayload())
+                 * Then use the following to get the response Object:
+                 *
+                 * ByteBuffer buffer = helper.getMergeBytes(responsePayload);
+                 * Response response = helper.getResponseObject(buffer.array());
+                 * this.setResponse(response)
+                 */
+
+                //Set Response
+                logger.info("UDP Client finished");
             }
-
-            logger.info("Client : Sending FIN");
-            String msgFIN = "Request sent";
-            Packet pFIN = new Packet.Builder()
-                    .setType(FIN)
-                    .setSequenceNumber(sequence)
-                    .setPortNumber(serverAddr.getPort())
-                    .setPeerAddress(serverAddr.getAddress())
-                    .setPayload(msgFIN.getBytes())
-                    .create();
-
-            channel.send(pFIN.toBuffer(), routerAddr);
-
-            responsePayload = new HashMap<Long, byte[]>();
-
-            //TODO Handle response
-            /**
-             * 1) Client receives response Packets, Type == DATA
-             * 2) When Client has Ack all response packets to the Server, Server sends packet Type == FIN
-             *
-             * Store packets in responsePayload.put(packet.getSequenceNumber, packet.getPayload())
-             * Then use the following to get the response Object:
-             *
-             * ByteBuffer buffer = helper.getMergeBytes(responsePayload);
-             * Response response = helper.getResponseObject(buffer.array());
-             * this.setResponse(response)
-             */
-
-            //Set Response
-            logger.info("UDP Client finished");
         }
     }
 
@@ -168,6 +173,35 @@ public class UDPClient {
             return -1;
         }
 
+    }
+
+    private HashMap<Long, Packet> breakDownPackets(Packet packet) {
+
+        HashMap<Long, Packet> responsePackets = new HashMap<>();
+        byte[] payload = packet.getPayload();
+        int numberOfPackets = (Math.floorDiv(payload.length, Packet.MAX_PAYLOAD) + 1); // Number of packets needed to send the Payload.
+        int offset = 0;
+        long seqNum = packet.getSequenceNumber();
+
+        for (int x = 0; x < numberOfPackets; x++) {
+            byte[] newPayload = Arrays.copyOfRange(payload, offset, (offset + Packet.MAX_PAYLOAD));
+
+            Packet responsePacket = null;
+            logger.info("Request Packet: #{}", x);
+
+            responsePacket = packet.toBuilder()
+                    .setPayload(newPayload)
+                    .setSequenceNumber(seqNum)
+                    .setType(DATA)
+                    .create();
+
+
+            seqNum++;
+            responsePackets.put(responsePacket.getSequenceNumber(), responsePacket);
+            offset += Packet.MAX_PAYLOAD;
+        }
+
+        return responsePackets;
     }
 
     private Packet receive(DatagramChannel channel) throws IOException {

@@ -4,7 +4,6 @@ import ca.concordia.helper.ByteHelper;
 import ca.concordia.network.exception.RedirectException;
 import ca.concordia.network.request.Request;
 import ca.concordia.network.response.Response;
-import ch.qos.logback.core.encoder.ByteArrayUtil;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.slf4j.Logger;
@@ -63,11 +62,13 @@ public class UDPServer {
 
                 //TODO Send Response
                 if (packetMap != null) {
-                    if (!sendResponse)
+                    if (!sendResponse){
                         for (Map.Entry<Long, Packet> packet : packetMap.entrySet()) {
                             this.sendPacket(packet.getValue());
                         }
+                    }
                     else {
+                        logger.info("Sending Response");
                         //TODO Make sure all response packets have been sent and received
                         // Pretty much the same logic as Client -> Server
                     }
@@ -87,10 +88,7 @@ public class UDPServer {
 
     private void sendPacket(Packet packet) {
         try {
-            logger.info("Sending Packet: {}", packet.getSequenceNumber());
             channel.send(packet.toBuffer(), routerAddress);
-            logger.info("Sent Packet: {}", packet.getSequenceNumber());
-
         } catch (Exception e) {
             logger.error(e.toString());
         }
@@ -201,11 +199,11 @@ public class UDPServer {
         HashMap<Long, Packet> responsePackets = new HashMap<>();
         int numberOfPackets = (Math.floorDiv(payload.length, Packet.MAX_PAYLOAD) + 1); // Number of packets needed to send the Payload.
         int offset = 0;
+        long seqNum = packet.getSequenceNumber();
 
         for (int x = 0; x < numberOfPackets; x++) {
             byte[] newPayload = Arrays.copyOfRange(payload, offset, (offset + Packet.MAX_PAYLOAD));
 
-            long seqNum = packet.getSequenceNumber();
             seqNum++;
             Packet responsePacket = null;
             logger.info("Response Packet: #{}", x);
