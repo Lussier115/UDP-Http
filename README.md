@@ -9,9 +9,8 @@ HTTPClientApplication
 1. **Maven Package**
 ---
 Httpfs
-1. mvn package (I package using an Intellij plugin)
-2. cd target
-3. `java -jar Httpfs.jar -v -d /home/wlussier/Projects/UDP-Http/sampleFiles`
+1. cd target
+2. `java -jar Httpfs.jar -v -d /home/wlussier/Projects/UDP-Http/sampleFiles`
 
     * Path directory: `-d $home/UDP-Http/sampleFiles`
     * Verbose: `-v`
@@ -22,18 +21,21 @@ Server
 2. `java -jar UDPServer.jar --port 8007`
 
     * Port: `--port #`
----
+
 
 Router (terminal)
 1. `go build -o router`
 2. `./router`
 
+---
 
 Client (Intellji)
 1. cd target
 2. `java -jar Httpc.jar {GET/POST Arguments}`
 
   Example: `java -jar Httpc.jar GET -v  http://httpbin.org/absolute-redirect/3`
+
+---
 
 ## Tested Commands
 
