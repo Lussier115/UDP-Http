@@ -10,7 +10,7 @@ import java.net.*;
 
 
 public class httpfs {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(httpfs.class);
 
     private static String MAINPATH = System.getProperty("user.dir") + "/src/ca/concordia/httpfs/httpfs";
@@ -60,7 +60,7 @@ public class httpfs {
             }
 
         } catch (IOException e) {
-            System.out.print(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 
@@ -86,11 +86,14 @@ public class httpfs {
 
                     if (index == 0) {
                         content += lineReader;
-                        logger.info(lineReader);
+
+                        if (lineReader != null)
+                            logger.info(lineReader);
 
                     } else {
                         if (verbose) {
-                            logger.info(lineReader);
+                            if (lineReader != null)
+                                logger.info(lineReader);
                         }
 
                         if (lineReader.toLowerCase().contains("content-length:")) {
@@ -107,34 +110,43 @@ public class httpfs {
                 String[] line = content.split(" ");
 
                 try {
-
-                    filePath = new URL(line[1]).getPath();
+                    if (!line[1].contains(":8080")) {
+                        //Make it work from browser
+                        filePath = line[1];
+                    } else {
+                        filePath = new URL(line[1]).getPath();
+                    }
 
                 } catch (MalformedURLException e) {
                     // it wasn't a URL
                 }
 
-                if (verbose) {
-                    logger.info(lineReader);
-                    logger.info("File path: " + filePath);
+                if (filePath.contains("..")) {
+                    logger.error("Invalid Path");
+                } else {
+                    if (verbose) {
+                        logger.info("File path: " + filePath);
+                    }
+
+                    if (line[0].toLowerCase().contains("get")) {
+                        if ((filePath.contentEquals("")) || (filePath.contentEquals("/"))) {
+                            /* PART 2: QUESTION 1*/
+                            readAllFiles(writer);
+                        } else {
+                            /* PART 2: QUESTION 2*/
+                            readFile(filePath, writer);
+                        }
+                    } else if (line[0].toLowerCase().contains("post")) {
+                        /* PART 2: QUESTION 3 */
+                        postFile(filePath, writer, reader);
+                    }
                 }
 
-                if (line[0].toLowerCase().contains("get")) {
-                    if ((filePath.contentEquals("")) || (filePath.contentEquals("/"))) {
-                        /* PART 2: QUESTION 1*/
-                        readAllFiles(writer);
-                    } else {
-                        /* PART 2: QUESTION 2*/
-                        readFile(filePath, writer);
-                    }
-                } else if (line[0].toLowerCase().contains("post")) {
-                    /* PART 2: QUESTION 3 */
-                    postFile(filePath, writer, reader);
-                }
 
                 socket.close();
             } catch (IOException e) {
                 logger.error(e.getMessage());
+            } catch (NullPointerException e) {
             }
         }
     }
@@ -155,7 +167,7 @@ public class httpfs {
             writer.flush();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
@@ -228,7 +240,7 @@ public class httpfs {
             }
 
             String data = payload.toString().replaceAll("\"", "").replaceAll("\\{", "").replaceAll("\\}", "");
-            
+
             newFile.write(data);
 
             int length = HttpReader.readContentLength(file);
