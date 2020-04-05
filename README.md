@@ -11,7 +11,7 @@ HTTPClientApplication
 Httpfs
 1. mvn package (I package using an Intellij plugin)
 2. cd target
-3. `java -jar Httpfs.jar -v -d /home/william/Projects/UDP-Http/sampleFiles`
+3. `java -jar Httpfs.jar -v -d /home/wlussier/Projects/UDP-Http/sampleFiles`
 
     * Path directory: `-d $home/UDP-Http/sampleFiles`
     * Verbose: `-v`
@@ -53,7 +53,7 @@ HTTPC
 #### GET
 `GET -v  http://httpbin.org/get`
 
-`GET -v  http://httpbin.org/absolute-redirect/3 -o /home/william/Projects/UDP-Http/sampleFiles/output.txt `
+`GET -v  http://httpbin.org/absolute-redirect/3 -o /home/wlussier/Projects/UDP-Http/sampleFiles/output.txt `
 
 `GET -v  http://httpbin.org/absolute-redirect/3`
 
@@ -61,14 +61,14 @@ HTTPC
 
 `GET -h "User-Agent: Hello" http://httpbin.org/status/418`
 
-`GET -h "User-Agent: Hello" http://httpbin.org/status/418 -o /home/william/Projects/UDP-Http/sampleFiles/teapot.txt `
+`GET -h "User-Agent: Hello" http://httpbin.org/status/418 -o /home/wlussier/Projects/UDP-Http/sampleFiles/teapot.txt `
 
 #### POST
 `POST -h Content-Type:application/json -d '{"Assignment": 1}' http://httpbin.org/post`
 
 `POST -h Content-Type:application/json -d '{"Assignment": {"Page": 2, "Paragraph": 2}}' http://httpbin.org/post`
 
-`POST -f /home/william/Projects/UDP-Http/sampleFiles/example.txt http://httpbin.org/post`
+`POST -f /home/wlussier/Projects/UDP-Http/sampleFiles/example.txt http://httpbin.org/post`
 
 HTTFS
 ---
@@ -81,4 +81,4 @@ HTTFS
 
 `Post -v -d '{"Assignment": 1}' http://localhost:8080/output.txt`
 
-`Post -v -f /home/william/Projects/UDP-Http/sampleFiles/teapot.txt http://localhost:8080/output.txt`
+`Post -v -f /home/wlussier/Projects/UDP-Http/sampleFiles/teapot.txt http://localhost:8080/output.txt`

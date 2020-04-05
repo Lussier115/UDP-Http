@@ -1,14 +1,19 @@
 package ca.concordia.httpfs;
 
+import ca.concordia.UDPClient;
 import ca.concordia.network.file.HttpReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.*;
 
 
 public class httpfs {
+    
+    private static final Logger logger = LoggerFactory.getLogger(UDPClient.class);
 
-    private static String MAINPATH = System.getProperty("user.dir") + "/src/com/http/httpfs";
+    private static String MAINPATH = System.getProperty("user.dir") + "/src/ca/concordia/httpfs/httpfs";
     private static int PORT = 8080;
     private static boolean verbose = false; //TODO
 
@@ -50,8 +55,8 @@ public class httpfs {
             client = new ServerSocket(port, 0, InetAddress.getLoopbackAddress());
 
             if (verbose) {
-                System.out.println("\nServerSocket Created: " + client.toString());
-                System.out.println("Directory: " + directory + "\n");
+                logger.info("ServerSocket Created: {}", client.toString());
+                logger.info("Directory: {}", directory);
             }
 
         } catch (IOException e) {
@@ -60,12 +65,11 @@ public class httpfs {
     }
 
     private void start() {
-        System.out.println("Server started at port: " + PORT);
+        logger.info("Server started at port: {}", PORT);
 
         while (true) {
             try {
                 Socket socket = client.accept();
-                System.out.println();
 
                 InputStream is = socket.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
@@ -82,11 +86,11 @@ public class httpfs {
 
                     if (index == 0) {
                         content += lineReader;
-                        System.out.println(lineReader);
+                        logger.info(lineReader);
 
                     } else {
                         if (verbose) {
-                            System.out.println(lineReader);
+                            logger.info(lineReader);
                         }
 
                         if (lineReader.toLowerCase().contains("content-length:")) {
@@ -111,8 +115,8 @@ public class httpfs {
                 }
 
                 if (verbose) {
-                    System.out.println(lineReader);
-                    System.out.println("File path: " + filePath);
+                    logger.info(lineReader);
+                    logger.info("File path: " + filePath);
                 }
 
                 if (line[0].toLowerCase().contains("get")) {
@@ -130,7 +134,7 @@ public class httpfs {
 
                 socket.close();
             } catch (IOException e) {
-                System.out.print(e.getMessage());
+                logger.error(e.getMessage());
             }
         }
     }
@@ -200,7 +204,7 @@ public class httpfs {
                 }
             }
         } catch (IOException e) {
-            System.out.print(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 
@@ -224,9 +228,7 @@ public class httpfs {
             }
 
             String data = payload.toString().replaceAll("\"", "").replaceAll("\\{", "").replaceAll("\\}", "");
-
-            System.out.println("Data is: " + data);
-
+            
             newFile.write(data);
 
             int length = HttpReader.readContentLength(file);
@@ -240,7 +242,7 @@ public class httpfs {
             newFile.close();
 
         } catch (IOException e) {
-            System.out.print(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 }
