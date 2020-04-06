@@ -18,7 +18,7 @@ Httpfs
 ---
 Server
 1. cd target
-2. `java -jar UDPServer.jar --port 8007`
+2. `java -jar Server.jar --port 8007`
 
     * Port: `--port #`
     
